@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+
+waste_dataset/
+uploads/
+runs/
+
+*.pt
+*.pth
+
+.env

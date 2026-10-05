@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# Large files - DO NOT COMMIT
+*.zip
+*.pt
+*.pth
+*.h5
+*.onnx
+
+# Dataset folders (5+ GB)
+waste_dataset/
+BDWaste/
+
+# Training runs
+runs/
+
+# Uploads
+uploads/
+
+# Test images
+your_waste_image.jpg
+
+# Hugging Face cache
+.cache/
+.huggingface/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env

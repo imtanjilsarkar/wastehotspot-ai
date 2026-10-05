@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+ultralytics
+huggingface_hub
+python-multipart
+pillow
