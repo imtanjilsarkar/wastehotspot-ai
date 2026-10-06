@@ -4,78 +4,128 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WasteHotspot AI — Map</title>
-
-  <!-- Leaflet CSS -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
   <link rel="stylesheet" href="/static/style.css" />
   <style>
-    #map { height: 520px; border-radius: 12px; z-index: 0; }
-    .map-stats {
-      display: flex;
-      gap: 1rem;
-      justify-content: space-around;
-      padding: 1rem;
-      background: white;
-      border-radius: 12px;
-      margin-bottom: 1rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    #map { height: 600px; border-radius: 16px; z-index: 0; }
+    .map-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 1.5rem;
     }
-    .map-stats div { text-align: center; }
-    .map-stats .num { font-size: 1.6rem; font-weight: 700; color: #1e7e34; display: block; }
-    .map-stats .lbl { font-size: 0.8rem; color: #666; text-transform: uppercase; }
+    @media (max-width: 900px) {
+      .map-layout { grid-template-columns: 1fr; }
+    }
+    .hotspot-item {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.85rem;
+      background: var(--gray-50);
+      border-radius: 10px;
+      margin-bottom: 0.6rem;
+      border-left: 3px solid var(--primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .hotspot-item:hover {
+      background: var(--primary-light);
+      transform: translateX(3px);
+    }
+    .hotspot-rank {
+      font-weight: 800;
+      font-size: 1.15rem;
+      color: var(--primary-dark);
+      min-width: 30px;
+    }
+    .hotspot-info { flex: 1; }
+    .hotspot-priority {
+      font-size: 0.75rem;
+      color: var(--gray-600);
+      margin-top: 0.25rem;
+    }
     .legend {
       display: flex;
       gap: 1rem;
+      flex-wrap: wrap;
       justify-content: center;
       margin-top: 1rem;
       font-size: 0.85rem;
     }
-    .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
-    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-    .dot-low { background: #2e7d32; }
-    .dot-medium { background: #f57c00; }
-    .dot-high { background: #c62828; }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--gray-600);
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>WasteHotspot AI</h1>
-    <p>Live map of waste reports across Dhaka</p>
-    <nav>
-      <a href="/">Upload</a>
-      <a href="/map" class="active">Map</a>
-    </nav>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a href="/" class="brand">
+        <div class="brand-icon">♻️</div>
+        <div class="brand-text">
+          <h1>WasteHotspot AI</h1>
+          <p>Smart waste detection for Dhaka</p>
+        </div>
+      </a>
+      <nav class="site-nav">
+        <a href="/" class="nav-link">Upload</a>
+        <a href="/map" class="nav-link active">Map</a>
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+      </nav>
+    </div>
   </header>
 
-  <main style="max-width: 960px;">
-    <section class="map-stats">
-      <div>
-        <span class="num" id="statReports">0</span>
-        <span class="lbl">Total Reports</span>
-      </div>
-      <div>
-        <span class="num" id="statHotspots">0</span>
-        <span class="lbl">Hotspots</span>
-      </div>
-      <div>
-        <span class="num" id="statWaste">0</span>
-        <span class="lbl">Items Detected</span>
-      </div>
-    </section>
+  <main class="page-container">
+    <h1 class="page-title animate-in">Live Hotspot Map</h1>
+    <p class="page-subtitle animate-in delay-1">Real-time waste reports across Dhaka</p>
 
-    <section style="padding: 0; overflow: hidden;">
-      <div id="map"></div>
-    </section>
+    <div class="stats-grid animate-in delay-2">
+      <div class="stat-card" style="--accent: var(--info);">
+        <div class="stat-icon"></div>
+        <div class="stat-value" id="statReports">0</div>
+        <div class="stat-label">Total Reports</div>
+      </div>
+      <div class="stat-card" style="--accent: var(--danger);">
+        <div class="stat-icon"></div>
+        <div class="stat-value" id="statHotspots">0</div>
+        <div class="stat-label">Active Hotspots</div>
+      </div>
+      <div class="stat-card" style="--accent: var(--warning);">
+        <div class="stat-icon"></div>
+        <div class="stat-value" id="statWaste">0</div>
+        <div class="stat-label">Items Detected</div>
+      </div>
+    </div>
 
-    <div class="legend">
-      <span><i class="dot dot-low"></i> Low severity</span>
-      <span><i class="dot dot-medium"></i> Medium</span>
-      <span><i class="dot dot-high"></i> High</span>
+    <div class="map-layout animate-in delay-3">
+      <div style="padding: 0; overflow: hidden; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08);">
+        <div id="map"></div>
+      </div>
+
+      <div class="card" style="margin-bottom: 0; max-height: 600px; overflow-y: auto;">
+        <h2 class="card-title">Top Hotspots</h2>
+        <div id="hotspotList">
+          <p style="color: var(--gray-600); font-size: 0.9rem;">Loading...</p>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><i class="dot" style="background: var(--primary);"></i> Low</span>
+          <span class="legend-item"><i class="dot" style="background: var(--warning);"></i> Medium</span>
+          <span class="legend-item"><i class="dot" style="background: var(--danger);"></i> High</span>
+        </div>
+      </div>
     </div>
   </main>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/static/map.js"></script>
 </body>

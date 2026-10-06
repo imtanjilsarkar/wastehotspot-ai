@@ -1,9 +1,14 @@
+// ============================================
+// WasteHotspot AI — Upload Page Logic
+// ============================================
+
 const fileInput = document.getElementById("fileInput");
 const detectBtn = document.getElementById("detectBtn");
 const gpsBtn = document.getElementById("gpsBtn");
 const latInput = document.getElementById("latInput");
 const lngInput = document.getElementById("lngInput");
 const locationStatus = document.getElementById("locationStatus");
+const dropZone = document.getElementById("dropZone");
 
 const preview = document.getElementById("preview");
 const previewSection = document.getElementById("previewSection");
@@ -15,16 +20,20 @@ const totalCount = document.getElementById("totalCount");
 const severityLabel = document.getElementById("severityLabel");
 const countsList = document.getElementById("countsList");
 
-// ---------- Location handling ----------
+let selectedFile = null;
+
+// ---------- Location ----------
 function updateLocationStatus() {
   const lat = parseFloat(latInput.value);
   const lng = parseFloat(lngInput.value);
   if (!isNaN(lat) && !isNaN(lng)) {
     locationStatus.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    locationStatus.classList.add("set");
+    locationStatus.style.color = "var(--primary-dark)";
+    locationStatus.style.fontWeight = "600";
   } else {
     locationStatus.textContent = "No location set";
-    locationStatus.classList.remove("set");
+    locationStatus.style.color = "var(--gray-600)";
+    locationStatus.style.fontWeight = "normal";
   }
 }
 
@@ -45,26 +54,52 @@ gpsBtn.addEventListener("click", () => {
     },
     (err) => {
       locationStatus.textContent = "GPS failed: " + err.message;
-      locationStatus.classList.remove("set");
+      locationStatus.style.color = "var(--danger)";
     },
     { enableHighAccuracy: true, timeout: 10000 }
   );
 });
 
-// ---------- Image preview ----------
+// ---------- Drag & Drop ----------
+dropZone.addEventListener("click", () => fileInput.click());
+
+dropZone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropZone.classList.add("dragover");
+});
+
+dropZone.addEventListener("dragleave", () => {
+  dropZone.classList.remove("dragover");
+});
+
+dropZone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith("image/")) {
+    handleFile(file);
+  }
+});
+
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0];
-  if (!file) return;
+  if (file) handleFile(file);
+});
+
+function handleFile(file) {
+  selectedFile = file;
   preview.src = URL.createObjectURL(file);
   previewSection.classList.remove("hidden");
   resultSection.classList.add("hidden");
   errorSection.classList.add("hidden");
-});
+  previewSection.classList.add("animate-in");
+  dropZone.querySelector(".drop-zone-text").innerHTML =
+    `<strong>✓ ${file.name}</strong> (${(file.size / 1024).toFixed(0)} KB)`;
+}
 
-// ---------- Detect & Report ----------
+// ---------- Detect ----------
 detectBtn.addEventListener("click", async () => {
-  const file = fileInput.files[0];
-  if (!file) {
+  if (!selectedFile) {
     showError("Please select an image first.");
     return;
   }
@@ -82,7 +117,7 @@ detectBtn.addEventListener("click", async () => {
   detectBtn.disabled = true;
 
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", selectedFile);
   formData.append("lat", lat);
   formData.append("lng", lng);
 
@@ -107,27 +142,50 @@ detectBtn.addEventListener("click", async () => {
   }
 });
 
+// ---------- Show Results ----------
 function showResults(data) {
-  totalCount.textContent = data.total;
+  // Animated count-up
+  animateNumber(totalCount, data.total, 800);
 
-  severityLabel.textContent = data.severity;
-  severityLabel.className = "sev-" + data.severity;
+  // Severity badge
+  severityLabel.textContent = data.severity.toUpperCase();
+  severityLabel.className = "badge badge-" + data.severity;
 
+  // Counts list
   countsList.innerHTML = "";
   if (data.total === 0) {
-    countsList.innerHTML = "<li>No waste detected in this image.</li>";
+    countsList.innerHTML = '<li class="class-item"><span>No waste detected</span></li>';
   } else {
-    for (const [className, count] of Object.entries(data.counts)) {
+    const sorted = Object.entries(data.counts).sort((a, b) => b[1] - a[1]);
+    sorted.forEach(([className, count]) => {
       const li = document.createElement("li");
-      li.innerHTML = `<span>${className}</span><span>${count}</span>`;
+      li.className = "class-item";
+      li.innerHTML = `<span class="class-name">${className}</span><span class="class-count">${count}</span>`;
       countsList.appendChild(li);
-    }
+    });
   }
 
   resultSection.classList.remove("hidden");
+  resultSection.classList.add("animate-in");
 }
 
 function showError(message) {
   errorMsg.textContent = message;
   errorSection.classList.remove("hidden");
+}
+
+// ---------- Helpers ----------
+function animateNumber(el, target, duration) {
+  const start = parseInt(el.textContent) || 0;
+  const startTime = performance.now();
+
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    el.textContent = Math.round(start + (target - start) * eased);
+    if (progress < 1) requestAnimationFrame(update);
+  }
+
+  requestAnimationFrame(update);
 }

@@ -3,70 +3,109 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WasteHotspot AI</title>
+  <title>WasteHotspot AI — Upload</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <header>
-    <h1>WasteHotspot AI</h1>
-    <p>Upload a waste photo, tag its location, and detect waste with AI.</p>
-    <nav>
-      <a href="/" class="active">Upload</a>
-      <a href="/map">Map</a>
-    </nav>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a href="/" class="brand">
+        <div class="brand-icon">♻️</div>
+        <div class="brand-text">
+          <h1>WasteHotspot AI</h1>
+          <p>Smart waste detection for Dhaka</p>
+        </div>
+      </a>
+      <nav class="site-nav">
+        <a href="/" class="nav-link active">Upload</a>
+        <a href="/map" class="nav-link">Map</a>
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+      </nav>
+    </div>
   </header>
 
-  <main>
-    <!-- Location Section -->
-    <section class="location-card">
-      <h2>📍 Location</h2>
-      <div class="location-controls">
-        <button id="gpsBtn" type="button">Use My Location</button>
-        <span id="locationStatus">No location set</span>
-      </div>
-      <div class="manual-location">
-        <label>
-          Latitude
-          <input type="number" id="latInput" step="0.000001" placeholder="23.8103" />
-        </label>
-        <label>
-          Longitude
-          <input type="number" id="lngInput" step="0.000001" placeholder="90.4125" />
-        </label>
-      </div>
-    </section>
+  <main class="page-container" style="max-width: 720px;">
+    <h1 class="page-title animate-in">Report Waste</h1>
+    <p class="page-subtitle animate-in delay-1">Upload a photo, tag the location, and let AI detect waste.</p>
 
-    <!-- Upload Section -->
-    <section class="upload-card">
-      <h2>📷 Upload Image</h2>
-      <input type="file" id="fileInput" accept="image/*" />
-      <button id="detectBtn" type="button">Detect & Report</button>
-    </section>
+    <!-- Location Card -->
+    <div class="card animate-in delay-2">
+      <h2 class="card-title">Location</h2>
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+        <button id="gpsBtn" class="btn btn-primary" type="button">
+          <span></span> Use My Location
+        </button>
+        <span id="locationStatus" style="color: var(--gray-600); font-size: 0.9rem;">No location set</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div>
+          <label class="label" for="latInput">Latitude</label>
+          <input type="number" id="latInput" class="input" step="0.000001" placeholder="23.8103" />
+        </div>
+        <div>
+          <label class="label" for="lngInput">Longitude</label>
+          <input type="number" id="lngInput" class="input" step="0.000001" placeholder="90.4125" />
+        </div>
+      </div>
+    </div>
 
-    <!-- Preview -->
-    <section id="previewSection" class="hidden">
-      <h2>Uploaded Image</h2>
-      <img id="preview" alt="Preview" />
-    </section>
+    <!-- Upload Card -->
+    <div class="card animate-in delay-3">
+      <h2 class="card-title">Upload Image</h2>
+      <div id="dropZone" class="drop-zone">
+        <div class="drop-zone-icon"></div>
+        <p class="drop-zone-text">
+          <strong>Click to upload</strong> or drag an image here
+        </p>
+        <p class="drop-zone-text" style="font-size: 0.8rem; margin-top: 0.5rem;">
+          JPG, PNG — max 10 MB
+        </p>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;" />
+      </div>
+      <button id="detectBtn" class="btn btn-primary btn-block mt-2" type="button">
+        <span></span> Detect & Report
+      </button>
+    </div>
 
     <!-- Loading -->
-    <section id="loadingSection" class="hidden">
-      <p>Analyzing image...</p>
-    </section>
+    <div id="loadingSection" class="card hidden text-center">
+      <div class="spinner"></div>
+      <p class="mt-2" style="color: var(--primary-dark); font-weight: 600;">Analyzing image...</p>
+    </div>
 
     <!-- Error -->
-    <section id="errorSection" class="hidden">
-      <p id="errorMsg"></p>
-    </section>
+    <div id="errorSection" class="card hidden" style="border-left: 4px solid var(--danger);">
+      <p id="errorMsg" style="color: var(--danger); font-weight: 600; margin: 0;"></p>
+    </div>
 
-    <!-- Detection Results -->
-    <section id="resultSection" class="hidden">
-      <h2>Detection Results</h2>
-      <p><strong>Total items:</strong> <span id="totalCount">0</span></p>
-      <p><strong>Severity:</strong> <span id="severityLabel">-</span></p>
-      <ul id="countsList"></ul>
-      <a href="/map" class="map-link">View on Map →</a>
-    </section>
+    <!-- Preview -->
+    <div id="previewSection" class="card hidden">
+      <h2 class="card-title">Uploaded Image</h2>
+      <img id="preview" alt="Preview" style="max-width: 100%; border-radius: 12px; display: block;" />
+    </div>
+
+    <!-- Results -->
+    <div id="resultSection" class="card hidden">
+      <h2 class="card-title">Detection Results</h2>
+      <div style="display: flex; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+        <div>
+          <div class="stat-label">Total items</div>
+          <div class="stat-value" id="totalCount">0</div>
+        </div>
+        <div>
+          <div class="stat-label">Severity</div>
+          <div style="margin-top: 0.5rem;"><span id="severityLabel" class="badge badge-low">-</span></div>
+        </div>
+      </div>
+      <ul id="countsList" class="class-list"></ul>
+      <a href="/map" class="btn btn-outline btn-block mt-3" style="text-decoration: none;">
+        View on Map
+      </a>
+    </div>
   </main>
 
   <script src="/static/app.js"></script>

@@ -60,6 +60,11 @@ async def map_page():
     with open(FRONTEND_DIR / "map.html", encoding="utf-8") as f:
         return f.read()
 
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_page():
+    with open(FRONTEND_DIR / "dashboard.html", encoding="utf-8") as f:
+        return f.read()
+
 
 @app.get("/api/health")
 async def health():
