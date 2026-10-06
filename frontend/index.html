@@ -9,43 +9,63 @@
 <body>
   <header>
     <h1>WasteHotspot AI</h1>
-    <p>Upload a waste photo and let AI detect it.</p>
+    <p>Upload a waste photo, tag its location, and detect waste with AI.</p>
+    <nav>
+      <a href="/" class="active">Upload</a>
+      <a href="/map">Map</a>
+    </nav>
   </header>
 
   <main>
-    <section class="upload-card">
-      <input type="file" id="fileInput" accept="image/*" />
-      <label class="check">
-        <input type="checkbox" id="tiledCheck" checked />
-        Deep scan (slower, finds more small items)
-      </label>
-      <button id="detectBtn">Detect Waste</button>
+    <!-- Location Section -->
+    <section class="location-card">
+      <h2>📍 Location</h2>
+      <div class="location-controls">
+        <button id="gpsBtn" type="button">Use My Location</button>
+        <span id="locationStatus">No location set</span>
+      </div>
+      <div class="manual-location">
+        <label>
+          Latitude
+          <input type="number" id="latInput" step="0.000001" placeholder="23.8103" />
+        </label>
+        <label>
+          Longitude
+          <input type="number" id="lngInput" step="0.000001" placeholder="90.4125" />
+        </label>
+      </div>
     </section>
 
+    <!-- Upload Section -->
+    <section class="upload-card">
+      <h2>📷 Upload Image</h2>
+      <input type="file" id="fileInput" accept="image/*" />
+      <button id="detectBtn" type="button">Detect & Report</button>
+    </section>
+
+    <!-- Preview -->
     <section id="previewSection" class="hidden">
       <h2>Uploaded Image</h2>
-      <div class="preview-wrap">
-        <img id="preview" alt="Preview" />
-        <canvas id="overlay"></canvas>
-      </div>
+      <img id="preview" alt="Preview" />
     </section>
 
-    <section id="resultSection" class="hidden">
-      <h2>Detection Results</h2>
-      <p><strong>Total items:</strong> <span id="totalCount">0</span></p>
-      <div class="slider-row">
-        <label for="confSlider">Confidence threshold: <strong id="confValue">25%</strong></label>
-        <input type="range" id="confSlider" min="10" max="90" value="25" />
-      </div>
-      <ul id="countsList"></ul>
-    </section>
-
+    <!-- Loading -->
     <section id="loadingSection" class="hidden">
       <p>Analyzing image...</p>
     </section>
 
+    <!-- Error -->
     <section id="errorSection" class="hidden">
       <p id="errorMsg"></p>
+    </section>
+
+    <!-- Detection Results -->
+    <section id="resultSection" class="hidden">
+      <h2>Detection Results</h2>
+      <p><strong>Total items:</strong> <span id="totalCount">0</span></p>
+      <p><strong>Severity:</strong> <span id="severityLabel">-</span></p>
+      <ul id="countsList"></ul>
+      <a href="/map" class="map-link">View on Map →</a>
     </section>
   </main>
 

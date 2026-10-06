@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WasteHotspot AI — Map</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    #map { height: 520px; border-radius: 12px; z-index: 0; }
+    .map-stats {
+      display: flex;
+      gap: 1rem;
+      justify-content: space-around;
+      padding: 1rem;
+      background: white;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    .map-stats div { text-align: center; }
+    .map-stats .num { font-size: 1.6rem; font-weight: 700; color: #1e7e34; display: block; }
+    .map-stats .lbl { font-size: 0.8rem; color: #666; text-transform: uppercase; }
+    .legend {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+    .dot-low { background: #2e7d32; }
+    .dot-medium { background: #f57c00; }
+    .dot-high { background: #c62828; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>WasteHotspot AI</h1>
+    <p>Live map of waste reports across Dhaka</p>
+    <nav>
+      <a href="/">Upload</a>
+      <a href="/map" class="active">Map</a>
+    </nav>
+  </header>
+
+  <main style="max-width: 960px;">
+    <section class="map-stats">
+      <div>
+        <span class="num" id="statReports">0</span>
+        <span class="lbl">Total Reports</span>
+      </div>
+      <div>
+        <span class="num" id="statHotspots">0</span>
+        <span class="lbl">Hotspots</span>
+      </div>
+      <div>
+        <span class="num" id="statWaste">0</span>
+        <span class="lbl">Items Detected</span>
+      </div>
+    </section>
+
+    <section style="padding: 0; overflow: hidden;">
+      <div id="map"></div>
+    </section>
+
+    <div class="legend">
+      <span><i class="dot dot-low"></i> Low severity</span>
+      <span><i class="dot dot-medium"></i> Medium</span>
+      <span><i class="dot dot-high"></i> High</span>
+    </div>
+  </main>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/static/map.js"></script>
+</body>
+</html>

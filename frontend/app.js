@@ -1,21 +1,57 @@
 const fileInput = document.getElementById("fileInput");
-const tiledCheck = document.getElementById("tiledCheck");
 const detectBtn = document.getElementById("detectBtn");
+const gpsBtn = document.getElementById("gpsBtn");
+const latInput = document.getElementById("latInput");
+const lngInput = document.getElementById("lngInput");
+const locationStatus = document.getElementById("locationStatus");
+
 const preview = document.getElementById("preview");
-const overlay = document.getElementById("overlay");
 const previewSection = document.getElementById("previewSection");
 const resultSection = document.getElementById("resultSection");
 const loadingSection = document.getElementById("loadingSection");
 const errorSection = document.getElementById("errorSection");
 const errorMsg = document.getElementById("errorMsg");
 const totalCount = document.getElementById("totalCount");
+const severityLabel = document.getElementById("severityLabel");
 const countsList = document.getElementById("countsList");
-const confSlider = document.getElementById("confSlider");
-const confValue = document.getElementById("confValue");
 
-let detections = []; // all boxes returned by the backend
+// ---------- Location handling ----------
+function updateLocationStatus() {
+  const lat = parseFloat(latInput.value);
+  const lng = parseFloat(lngInput.value);
+  if (!isNaN(lat) && !isNaN(lng)) {
+    locationStatus.textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    locationStatus.classList.add("set");
+  } else {
+    locationStatus.textContent = "No location set";
+    locationStatus.classList.remove("set");
+  }
+}
 
-// Show image preview when a file is selected
+latInput.addEventListener("input", updateLocationStatus);
+lngInput.addEventListener("input", updateLocationStatus);
+
+gpsBtn.addEventListener("click", () => {
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported by your browser");
+    return;
+  }
+  locationStatus.textContent = "Getting location...";
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      latInput.value = pos.coords.latitude.toFixed(6);
+      lngInput.value = pos.coords.longitude.toFixed(6);
+      updateLocationStatus();
+    },
+    (err) => {
+      locationStatus.textContent = "GPS failed: " + err.message;
+      locationStatus.classList.remove("set");
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+});
+
+// ---------- Image preview ----------
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0];
   if (!file) return;
@@ -23,22 +59,20 @@ fileInput.addEventListener("change", () => {
   previewSection.classList.remove("hidden");
   resultSection.classList.add("hidden");
   errorSection.classList.add("hidden");
-  detections = [];
-  clearOverlay();
 });
 
-// Keep the boxes aligned if the image size changes
-preview.addEventListener("load", render);
-window.addEventListener("resize", render);
-
-// Re-filter instantly when the slider moves (no new request needed)
-confSlider.addEventListener("input", render);
-
-// Send image to backend on button click
+// ---------- Detect & Report ----------
 detectBtn.addEventListener("click", async () => {
   const file = fileInput.files[0];
   if (!file) {
     showError("Please select an image first.");
+    return;
+  }
+
+  const lat = parseFloat(latInput.value);
+  const lng = parseFloat(lngInput.value);
+  if (isNaN(lat) || isNaN(lng)) {
+    showError("Please set a location first (GPS or manual).");
     return;
   }
 
@@ -49,19 +83,22 @@ detectBtn.addEventListener("click", async () => {
 
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("lat", lat);
+  formData.append("lng", lng);
 
   try {
-    const response = await fetch(`/api/detect?tiled=${tiledCheck.checked}`, {
+    const response = await fetch("/api/detect", {
       method: "POST",
       body: formData,
     });
 
-    if (!response.ok) throw new Error("Server error: " + response.status);
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error("Server error: " + response.status + " — " + errText);
+    }
 
     const data = await response.json();
-    detections = data.detections;
-    resultSection.classList.remove("hidden");
-    render();
+    showResults(data);
   } catch (err) {
     showError(err.message);
   } finally {
@@ -70,79 +107,24 @@ detectBtn.addEventListener("click", async () => {
   }
 });
 
-function visibleDetections() {
-  const threshold = Number(confSlider.value) / 100;
-  return detections.filter((d) => d.conf >= threshold);
-}
+function showResults(data) {
+  totalCount.textContent = data.total;
 
-function render() {
-  confValue.textContent = confSlider.value + "%";
-  const shown = visibleDetections();
-  drawBoxes(shown);
-  showCounts(shown);
-}
+  severityLabel.textContent = data.severity;
+  severityLabel.className = "sev-" + data.severity;
 
-function colorFor(label) {
-  let hash = 0;
-  for (const ch of label) hash = (hash * 31 + ch.charCodeAt(0)) % 360;
-  return `hsl(${hash}, 85%, 45%)`;
-}
-
-function clearOverlay() {
-  const ctx = overlay.getContext("2d");
-  ctx.clearRect(0, 0, overlay.width, overlay.height);
-}
-
-function drawBoxes(list) {
-  const w = preview.clientWidth;
-  const h = preview.clientHeight;
-  if (!w || !h) return;
-  overlay.width = w;
-  overlay.height = h;
-  const ctx = overlay.getContext("2d");
-  ctx.clearRect(0, 0, w, h);
-  ctx.lineWidth = 2;
-  ctx.font = "12px system-ui, sans-serif";
-  ctx.textBaseline = "top";
-
-  for (const d of list) {
-    const x = d.x1 * w, y = d.y1 * h;
-    const bw = (d.x2 - d.x1) * w, bh = (d.y2 - d.y1) * h;
-    const color = colorFor(d.label);
-    ctx.strokeStyle = color;
-    ctx.strokeRect(x, y, bw, bh);
-
-    const text = `${d.label} ${Math.round(d.conf * 100)}%`;
-    const tw = ctx.measureText(text).width + 6;
-    const ty = y >= 16 ? y - 16 : y; // keep the label inside the image
-    ctx.fillStyle = color;
-    ctx.fillRect(x, ty, tw, 16);
-    ctx.fillStyle = "#fff";
-    ctx.fillText(text, x + 3, ty + 2);
-  }
-}
-
-function showCounts(list) {
-  totalCount.textContent = list.length;
   countsList.innerHTML = "";
-
-  if (list.length === 0) {
-    countsList.innerHTML = "<li>No waste detected. Try lowering the threshold.</li>";
-    return;
+  if (data.total === 0) {
+    countsList.innerHTML = "<li>No waste detected in this image.</li>";
+  } else {
+    for (const [className, count] of Object.entries(data.counts)) {
+      const li = document.createElement("li");
+      li.innerHTML = `<span>${className}</span><span>${count}</span>`;
+      countsList.appendChild(li);
+    }
   }
 
-  const counts = {};
-  for (const d of list) counts[d.label] = (counts[d.label] || 0) + 1;
-
-  for (const [className, count] of Object.entries(counts)) {
-    const li = document.createElement("li");
-    const name = document.createElement("span");
-    name.textContent = className; // textContent, not innerHTML: labels come from the server
-    const num = document.createElement("span");
-    num.textContent = count;
-    li.append(name, num);
-    countsList.appendChild(li);
-  }
+  resultSection.classList.remove("hidden");
 }
 
 function showError(message) {
